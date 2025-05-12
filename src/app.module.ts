@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './products/products.module';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
+import { MealsWsModule } from './meals-ws/meals-ws.module';
 
 
 @Module({
@@ -27,7 +28,9 @@ import { CommonModule } from './common/common.module';
 
     AuthModule,
 
-    CommonModule
+    CommonModule,
+
+    MealsWsModule
 
    ],
   controllers: [],
