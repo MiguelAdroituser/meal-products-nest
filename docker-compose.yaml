@@ -1,14 +1,16 @@
-version: '3'
-
 services:
   db:
     image: postgres:14.3
-    restart: always
+    restart: unless-stopped  # Better restart policy
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     container_name: mealproductsdb
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - type: bind
+        source: ./postgres
+        target: /var/lib/postgresql/data
+        consistency: delegated  # Important for MacOS performance
