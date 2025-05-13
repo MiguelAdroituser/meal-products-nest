@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { MealsWsService } from 'src/meals-ws/meals-ws.service';
 
 @Injectable()
 export class ProductsService {
@@ -13,6 +14,7 @@ export class ProductsService {
     constructor(
         @InjectRepository(Product)
         private readonly productRepository: Repository<Product>,
+        private readonly mealsWsService: MealsWsService // Inject WebSocket service
     ){}
 
     async findAll( paginationDto: PaginationDto ){
@@ -61,6 +63,9 @@ export class ProductsService {
             const product = this.productRepository.create( createProductDto );
             await this.productRepository.save( product );
 
+            // Broadcast new product to all connected clients
+            this.mealsWsService.broadcastProductUpdate('product:created', product);
+
             return product;
 
         } catch ( error ) {
@@ -81,6 +86,10 @@ export class ProductsService {
 
         try {
             await this.productRepository.save( product );
+
+            // Broadcast updated product
+            this.mealsWsService.broadcastProductUpdate('product:updated', product);
+
             return product;
             
         } catch (error) {
@@ -93,6 +102,10 @@ export class ProductsService {
     async remove( id: number ) {
         const product = await this.findOne( id )
         await this.productRepository.remove( product );
+
+        // Broadcast deletion
+        this.mealsWsService.broadcastProductUpdate('product:deleted', { id });
+
     }
 
     private handleDBExceptions( error: any ){
