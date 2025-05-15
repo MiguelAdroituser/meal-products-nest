@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { MealsWsService } from 'src/meals-ws/meals-ws.service';
+import { EventsService } from 'src/events/events.service';
 
 @Injectable()
 export class ProductsService {
@@ -14,7 +14,8 @@ export class ProductsService {
     constructor(
         @InjectRepository(Product)
         private readonly productRepository: Repository<Product>,
-        private readonly mealsWsService: MealsWsService // Inject WebSocket service
+        private readonly eventsService: EventsService // Replace MealsWsService with this
+        // private readonly mealsWsService: MealsWsService // Inject WebSocket service
     ){}
 
     async findAll( paginationDto: PaginationDto ){
@@ -64,7 +65,10 @@ export class ProductsService {
             await this.productRepository.save( product );
 
             // Broadcast new product to all connected clients
-            this.mealsWsService.broadcastProductUpdate('product:created', product);
+            // Update your broadcast calls to use:
+            this.eventsService.broadcast('item-created', product);
+            // Instead of mealsWsService.broadcastUpdate()
+            // this.mealsWsService.broadcastUpdate('item-created', product);
 
             return product;
 
@@ -88,7 +92,9 @@ export class ProductsService {
             await this.productRepository.save( product );
 
             // Broadcast updated product
-            this.mealsWsService.broadcastProductUpdate('product:updated', product);
+            // this.mealsWsService.broadcastProductUpdate('updated', product);
+            // Broadcast updated product using eventsService
+            this.eventsService.broadcast('item-updated', product);
 
             return product;
             
@@ -104,7 +110,7 @@ export class ProductsService {
         await this.productRepository.remove( product );
 
         // Broadcast deletion
-        this.mealsWsService.broadcastProductUpdate('product:deleted', { id });
+        // this.mealsWsService.broadcastProductUpdate('deleted', { id });
 
     }
 

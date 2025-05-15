@@ -6,6 +6,8 @@ import { ProductsModule } from './products/products.module';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 import { MealsWsModule } from './meals-ws/meals-ws.module';
+import { EventsService } from './events/events.service';
+import { EventsModule } from './events/events.module';
 
 
 @Module({
@@ -30,11 +32,13 @@ import { MealsWsModule } from './meals-ws/meals-ws.module';
 
     CommonModule,
 
-    MealsWsModule
+    MealsWsModule,
+
+    EventsModule
 
    ],
   controllers: [],
-  providers: [],
+  providers: [EventsService],
   exports:[],
 })
 export class AppModule {}

@@ -3,6 +3,7 @@ import { MealsWsService } from './meals-ws.service';
 import { Server, Socket } from 'socket.io';
 import { NewMessageDto } from './dtos/new-message.dto';
 import { ProductsService } from 'src/products/products.service';
+import { EventsService } from 'src/events/events.service';
 
 @WebSocketGateway({ 
   cors: true,
@@ -10,15 +11,17 @@ import { ProductsService } from 'src/products/products.service';
 })
 export class MealsWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
-  @WebSocketServer() wss: Server;
+  @WebSocketServer() server: Server;
 
   constructor(
     private readonly mealsWsService: MealsWsService,
-    private readonly productsService: ProductsService
+    private readonly productsService: ProductsService,
+    private readonly eventsService: EventsService // Add this
   ) {}
 
   afterInit(server: Server) {
-    this.mealsWsService.setServer(server);
+    // this.mealsWsService.setServer(server);
+    this.eventsService.setServer(server);
   }
 
   /* handleConnection( client: Socket ) {
@@ -36,16 +39,16 @@ export class MealsWsGateway implements OnGatewayConnection, OnGatewayDisconnect 
       this.mealsWsService.registerClient(client);
       
       // Send initial product data to newly connected client
-      const products = await this.mealsWsService.getInitialProducts();
+      const products = await this.productsService.findAll({ limit: 50, offset: 0 });
       client.emit('initial-products', products);
       
       // Update all clients about new connection
-      this.wss.emit('clients-updated', this.mealsWsService.getConnectedClients());
+      this.server.emit('clients-updated', this.mealsWsService.getConnectedClients());
   }
 
   handleDisconnect(client: Socket) {
     this.mealsWsService.removeClient(client.id);
-    this.wss.emit('clients-updated', this.mealsWsService.getConnectedClients());
+    // this.server.emit('clients-updated', this.mealsWsService.getConnectedClients());
   }
 
 
@@ -80,6 +83,15 @@ export class MealsWsGateway implements OnGatewayConnection, OnGatewayDisconnect 
       message: payload.message || 'no-message'
     }); */
 
+  }
+
+  // Add new handler for product-specific events
+  @SubscribeMessage('request-product-update')
+  async handleProductUpdateRequest(client: Socket, productId: number) {
+    const product = await this.productsService.findOne(productId);
+    if (product) {
+      client.emit('product-updated', product);
+    }
   }
 
 }
